@@ -1,368 +1,515 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <base target="_top">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Team Ball Comparison</title>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <style>
+    * { box-sizing: border-box; }
 
-<style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+      padding: 24px;
+    }
 
-*{
-  box-sizing:border-box;
-}
+    .app {
+      max-width: 1100px;
+      margin: 0 auto;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 24px;
+      box-shadow: 0 10px 28px rgba(0, 0, 0, 0.12);
+    }
 
-body{
-  font-family:Arial, sans-serif;
-  background:#f4f7fb;
-  margin:0;
-  padding:16px;
-}
+    h1 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: 2rem;
+    }
 
-.app{
-  max-width:700px;
-  margin:auto;
-  background:white;
-  border-radius:20px;
-  padding:28px;
-  box-shadow:0 8px 24px rgba(0,0,0,0.15);
-}
+    .subtitle {
+      margin: 0 0 20px;
+      text-align: center;
+      color: #6b7280;
+      line-height: 1.5;
+    }
 
-h1{
-  text-align:center;
-  margin-bottom:24px;
-  font-size:2rem;
-}
+    .top-controls {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-bottom: 22px;
+      align-items: center;
+    }
 
-.row{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:20px;
-  margin-bottom:20px;
-}
+    .url-input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 1rem;
+    }
 
-label{
-  display:block;
-  font-weight:bold;
-  margin-bottom:8px;
-  font-size:1.2rem;
-}
+    .load-btn {
+      border: none;
+      border-radius: 12px;
+      background: #2563eb;
+      color: white;
+      padding: 14px 18px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      min-width: 120px;
+    }
 
-input[type="number"]{
-  width:100%;
-  padding:16px;
-  font-size:1.3rem;
-  border:1px solid #ccc;
-  border-radius:12px;
-}
+    .team-picker-row {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 24px;
+    }
 
-.phase-title{
-  font-weight:bold;
-  font-size:1.35rem;
-  text-align:left;
-  margin-bottom:8px;
-}
+    .team-picker {
+      min-width: 180px;
+    }
 
-.counter-card{
-  border:1px solid #ddd;
-  border-radius:16px;
-  padding:18px;
-  margin-bottom:20px;
-}
+    .team-picker label {
+      display: block;
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
 
-.auto-card{
-  background:rgba(255,0,0,0.08);
-}
+    .team-picker select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 12px;
+      font-size: 1rem;
+      background: white;
+    }
 
-.teleop-card{
-  background:rgba(0,100,255,0.08);
-}
+    .status {
+      min-height: 24px;
+      text-align: center;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
 
-.center-label{
-  text-align:center;
-  font-weight:bold;
-  font-size:1.2rem;
-  margin-bottom:10px;
-}
+    .chart-wrap {
+      position: relative;
+      width: 100%;
+      height: 560px;
+      padding: 8px 8px 0;
+    }
 
-.counter-controls{
-  display:grid;
-  grid-template-columns:120px 1fr 120px;
-  gap:16px;
-  align-items:center;
-}
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 18px;
+    }
 
-.counter-value{
-  text-align:center;
-  font-size:3rem;
-  font-weight:bold;
-  padding:18px;
-  background:white;
-  border-radius:14px;
-  min-height:82px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
+    .summary-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 14px;
+      background: #fafcff;
+    }
 
-button{
-  border:none;
-  border-radius:14px;
-  padding:20px 12px;
-  font-size:2.2rem;
-  font-weight:bold;
-  cursor:pointer;
-  min-height:82px;
-}
+    .summary-card h3 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      text-align: center;
+    }
 
-.minus-btn{
-  background:#dc2626;
-  color:white;
-}
+    .summary-card div {
+      line-height: 1.6;
+    }
 
-.plus-btn{
-  background:#2563eb;
-  color:white;
-}
+    .hint {
+      margin-top: 16px;
+      color: #6b7280;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
 
-.submit-btn{
-  width:100%;
-  background:#059669;
-  color:white;
-  margin-top:12px;
-  font-size:1.8rem;
-  min-height:76px;
-}
+    @media (max-width: 800px) {
+      .top-controls {
+        grid-template-columns: 1fr;
+      }
 
-.auto-climb-wrap{
-  margin-top:18px;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:center;
-}
+      .load-btn {
+        width: 100%;
+      }
 
-.auto-climb-title{
-  font-weight:bold;
-  font-size:1.2rem;
-  text-align:center;
-  margin-bottom:10px;
-}
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
 
-.auto-climb-check{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-.auto-climb-check input[type="checkbox"]{
-  width:26px;
-  height:26px;
-}
-
-.end-climb-wrap{
-  margin-top:18px;
-}
-
-.end-climb-title{
-  font-weight:bold;
-  font-size:1.2rem;
-  text-align:center;
-  margin-bottom:10px;
-}
-
-.radio-row{
-  display:flex;
-  gap:24px;
-  font-size:1.2rem;
-  align-items:center;
-  justify-content:center;
-  flex-wrap:wrap;
-}
-
-.radio-row label{
-  display:flex;
-  align-items:center;
-  gap:8px;
-  margin-bottom:0;
-  font-weight:bold;
-}
-
-input[type="radio"]{
-  width:22px;
-  height:22px;
-}
-
-.status{
-  margin-top:16px;
-  font-weight:bold;
-  text-align:center;
-  font-size:1.1rem;
-  min-height:28px;
-}
-
-@media (max-width:640px){
-  .row{
-    grid-template-columns:1fr;
-    gap:16px;
-  }
-
-  .counter-controls{
-    grid-template-columns:100px 1fr 100px;
-    gap:12px;
-  }
-
-  .counter-value{
-    font-size:2.4rem;
-  }
-
-  button{
-    font-size:2rem;
-  }
-}
-
-</style>
+      .chart-wrap {
+        height: 440px;
+      }
+    }
+  </style>
 </head>
-
 <body>
+  <div class="app">
+    <h1>Team Ball Comparison</h1>
+    <p class="subtitle">
+      Load a published Google Sheets CSV, choose up to three teams from the <strong>Team #</strong> column,
+      and compare their average <strong>Auto Balls</strong>, <strong>Teleop Balls</strong>, and <strong>Total Balls</strong>
+      in a stacked vertical bar chart.
+    </p>
 
-<div class="app">
+    <div class="top-controls">
+      <input
+        id="csvUrl"
+        class="url-input"
+        type="url"
+        value="https://docs.google.com/spreadsheets/d/e/2PACX-1vRK69XQ9jJelpf8F0V_Y5rjP9x3UFUs0-sGPaX_e_Jib65K4nV8Yy-qXqlWzzREN6ZSrWVsYBODYOm7/pub?gid=0&single=true&output=csv"
+        placeholder="Paste a Google Sheets CSV URL here"
+      />
+      <button id="loadBtn" class="load-btn">Reload Sheet</button>
+    </div>
 
-<h1>Ball Scouting App</h1>
+    <div class="team-picker-row">
+      <div class="team-picker">
+        <label for="team1">Team 1</label>
+        <select id="team1">
+          <option value="">Select Team</option>
+        </select>
+      </div>
+      <div class="team-picker">
+        <label for="team2">Team 2</label>
+        <select id="team2">
+          <option value="">Select Team</option>
+        </select>
+      </div>
+      <div class="team-picker">
+        <label for="team3">Team 3</label>
+        <select id="team3">
+          <option value="">Select Team</option>
+        </select>
+      </div>
+    </div>
 
-<form id="scoutingForm">
+    <div id="status" class="status"></div>
 
-<div class="row">
-  <div>
-    <label>Match #</label>
-    <input type="number" id="matchNumber" min="1" required>
-  </div>
+    <div class="chart-wrap">
+      <canvas id="comparisonChart"></canvas>
+    </div>
 
-  <div>
-    <label>Team #</label>
-    <input type="number" id="teamNumber" min="1" required>
-  </div>
-</div>
+    <div class="summary-grid" id="summaryGrid"></div>
 
-<div class="phase-title">Autonomous</div>
-<div class="counter-card auto-card">
-
-  <div class="center-label">Balls Scored</div>
-
-  <div class="counter-controls">
-    <button type="button" class="minus-btn" onclick="changeCounter('autoCount',-1)">-</button>
-    <div class="counter-value" id="autoCountDisplay">0</div>
-    <button type="button" class="plus-btn" onclick="changeCounter('autoCount',1)">+</button>
-  </div>
-
-  <div class="auto-climb-wrap">
-    <div class="auto-climb-title">Auto Climb</div>
-    <div class="auto-climb-check">
-      <input type="checkbox" id="autoClimb">
+    <div class="hint">
+      Required sheet columns: <strong>Team #</strong>, <strong>Auto Balls</strong>, and <strong>Teleop Balls</strong>.
+      For Google Sheets, a stable CSV URL usually looks like:
+      <code>.../gviz/tq?tqx=out:csv</code> or <code>.../export?format=csv</code>.
     </div>
   </div>
 
-</div>
+  <script>
+    Chart.register(ChartDataLabels);
 
-<div class="phase-title">Teleop</div>
-<div class="counter-card teleop-card">
+    const TEAM_COLUMN = 'Team #';
+    const AUTO_COLUMN = 'Auto Balls';
+    const TELEOP_COLUMN = 'Teleop Balls';
 
-  <div class="center-label">Balls Scored</div>
+    const teamSelectIds = ['team1', 'team2', 'team3'];
+    const teamColors = [
+      'rgba(239, 68, 68, 0.82)',
+      'rgba(59, 130, 246, 0.82)',
+      'rgba(34, 197, 94, 0.82)'
+    ];
 
-  <div class="counter-controls">
-    <button type="button" class="minus-btn" onclick="changeCounter('teleopCount',-1)">-</button>
-    <div class="counter-value" id="teleopCountDisplay">0</div>
-    <button type="button" class="plus-btn" onclick="changeCounter('teleopCount',1)">+</button>
-  </div>
+    let rows = [];
+    let teamAverages = {};
+    let chartInstance = null;
 
-  <div class="end-climb-wrap">
-    <div class="end-climb-title">End Game Climb</div>
-    <div class="radio-row">
-      <label><input type="radio" name="endClimb" value="L1">L1</label>
-      <label><input type="radio" name="endClimb" value="L2">L2</label>
-      <label><input type="radio" name="endClimb" value="L3">L3</label>
-    </div>
-  </div>
+    const csvUrlInput = document.getElementById('csvUrl');
+    const loadBtn = document.getElementById('loadBtn');
+    const statusEl = document.getElementById('status');
+    const summaryGrid = document.getElementById('summaryGrid');
 
-</div>
+    loadBtn.addEventListener('click', loadSheetData);
+    teamSelectIds.forEach(id => {
+      document.getElementById(id).addEventListener('change', updateChart);
+    });
 
-<input type="hidden" id="autoCount" value="0">
-<input type="hidden" id="teleopCount" value="0">
+    function setStatus(message, isError = false) {
+      statusEl.textContent = message;
+      statusEl.style.color = isError ? '#b91c1c' : '#166534';
+    }
 
-<button type="submit" class="submit-btn" id="submitBtn">Submit</button>
+    async function loadSheetData() {
+      const url = csvUrlInput.value.trim();
+      if (!url) {
+        setStatus('Please paste a CSV URL first.', true);
+        return;
+      }
 
-</form>
+      setStatus('Loading sheet data...');
+      summaryGrid.innerHTML = '';
 
-<div id="status" class="status"></div>
+      Papa.parse(url, {
+        download: true,
+        header: true,
+        skipEmptyLines: true,
+        complete: function(result) {
+          if (result.errors && result.errors.length > 0) {
+            setStatus('Could not parse the sheet data.', true);
+            return;
+          }
 
-</div>
+          rows = result.data || [];
+          if (!rows.length) {
+            setStatus('No rows were found in the sheet.', true);
+            return;
+          }
 
-<script>
+          const columns = Object.keys(rows[0] || {});
+          if (!columns.includes(TEAM_COLUMN) || !columns.includes(AUTO_COLUMN) || !columns.includes(TELEOP_COLUMN)) {
+            setStatus('The sheet must contain Team #, Auto Balls, and Teleop Balls columns.', true);
+            return;
+          }
 
-function changeCounter(id,delta){
-  const input=document.getElementById(id)
-  const display=document.getElementById(id+"Display")
+          teamAverages = buildTeamAverages(rows);
+          const teamNumbers = Object.keys(teamAverages).sort((a, b) => Number(a) - Number(b));
 
-  let value=parseInt(input.value||"0",10)
-  value+=delta
-  if(value<0)value=0
+          if (!teamNumbers.length) {
+            setStatus('No valid team rows were found.', true);
+            return;
+          }
 
-  input.value=value
-  display.textContent=value
-}
+          populateDropdowns(teamNumbers);
+          setStatus(`Loaded ${rows.length} rows and ${teamNumbers.length} teams.`);
+          updateChart();
+        },
+        error: function() {
+          setStatus('Unable to download the CSV. Make sure the sheet is publicly accessible as CSV.', true);
+        }
+      });
+    }
 
-function getEndClimb(){
-  const selected=document.querySelector('input[name="endClimb"]:checked')
-  return selected?selected.value:""
-}
+    function buildTeamAverages(dataRows) {
+      const grouped = {};
 
-document.getElementById("scoutingForm").addEventListener("submit",function(e){
-  e.preventDefault()
+      for (const row of dataRows) {
+        const team = String(row[TEAM_COLUMN] || '').trim();
+        if (!team) continue;
 
-  const matchNumber=document.getElementById("matchNumber").value
-  const teamNumber=document.getElementById("teamNumber").value
-  const autoCount=document.getElementById("autoCount").value
-  const teleopCount=document.getElementById("teleopCount").value
-  const autoClimb=document.getElementById("autoClimb").checked
-  const endClimb=getEndClimb()
+        const auto = toNumber(row[AUTO_COLUMN]);
+        const teleop = toNumber(row[TELEOP_COLUMN]);
+        if (!grouped[team]) {
+          grouped[team] = { count: 0, autoSum: 0, teleopSum: 0 };
+        }
 
-  const status=document.getElementById("status")
-  const submitBtn=document.getElementById("submitBtn")
+        grouped[team].count += 1;
+        grouped[team].autoSum += auto;
+        grouped[team].teleopSum += teleop;
+      }
 
-  if(!matchNumber||!teamNumber){
-    status.textContent="Please fill Match # and Team #"
-    return
-  }
+      const averages = {};
+      for (const [team, stats] of Object.entries(grouped)) {
+        const autoAvg = stats.count ? stats.autoSum / stats.count : 0;
+        const teleopAvg = stats.count ? stats.teleopSum / stats.count : 0;
+        averages[team] = {
+          matches: stats.count,
+          autoAvg,
+          teleopAvg,
+          totalAvg: autoAvg + teleopAvg
+        };
+      }
 
-  submitBtn.disabled=true
-  status.textContent="Submitting..."
+      return averages;
+    }
 
-  google.script.run
-    .withSuccessHandler(function(){
-      status.textContent="Submitted"
+    function populateDropdowns(teamNumbers) {
+      teamSelectIds.forEach((id, index) => {
+        const select = document.getElementById(id);
+        const previous = select.value;
+        select.innerHTML = '<option value="">Select Team</option>';
 
-      document.getElementById("scoutingForm").reset()
-      document.getElementById("autoCount").value=0
-      document.getElementById("teleopCount").value=0
-      document.getElementById("autoCountDisplay").textContent="0"
-      document.getElementById("teleopCountDisplay").textContent="0"
-      document.getElementById("matchNumber").focus()
+        for (const team of teamNumbers) {
+          const option = document.createElement('option');
+          option.value = team;
+          option.textContent = team;
+          select.appendChild(option);
+        }
 
-      submitBtn.disabled=false
-    })
-    .withFailureHandler(function(error){
-      status.textContent="Error: "+error.message
-      submitBtn.disabled=false
-    })
-    .submitScoutData({
-      matchNumber:Number(matchNumber),
-      teamNumber:Number(teamNumber),
-      ballsScoredAuto:Number(autoCount),
-      ballsScoredTeleop:Number(teleopCount),
-      autoClimb:autoClimb,
-      endClimb:endClimb
-    })
-})
+        if (teamNumbers.includes(previous)) {
+          select.value = previous;
+        } else if (!previous && teamNumbers[index]) {
+          select.value = teamNumbers[index];
+        }
+      });
+    }
 
-</script>
+    function updateChart() {
+      const selectedTeams = teamSelectIds
+        .map(id => document.getElementById(id).value)
+        .filter(Boolean)
+        .filter((value, index, arr) => arr.indexOf(value) === index);
 
+      if (!selectedTeams.length) {
+        renderEmptyChart();
+        summaryGrid.innerHTML = '';
+        setStatus('Choose one or more teams to display.');
+        return;
+      }
+
+      const labels = ['Auto Balls', 'Teleop Balls', 'Total Balls'];
+      const datasets = selectedTeams.map((team, index) => {
+        const stats = teamAverages[team];
+        return {
+          label: `Team ${team}`,
+          data: [stats.autoAvg, stats.teleopAvg, stats.totalAvg],
+          backgroundColor: teamColors[index % teamColors.length],
+          borderColor: teamColors[index % teamColors.length],
+          borderWidth: 1,
+          borderRadius: 6,
+          datalabels: {
+            display: (ctx) => ctx.dataset.data[ctx.dataIndex] > 0,
+            color: '#111827',
+            formatter: () => `Team ${team}`,
+            font: {
+              weight: '700',
+              size: 12
+            },
+            anchor: 'center',
+            align: 'center',
+            clip: false
+          }
+        };
+      });
+
+      const ctx = document.getElementById('comparisonChart').getContext('2d');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                font: { size: 13, weight: '700' }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return `${context.dataset.label}: ${context.parsed.y.toFixed(2)}`;
+                }
+              }
+            },
+            datalabels: {
+              clamp: true
+            }
+          },
+          scales: {
+            x: {
+              stacked: true,
+              ticks: {
+                font: { size: 13, weight: '700' }
+              }
+            },
+            y: {
+              stacked: true,
+              beginAtZero: true,
+              ticks: {
+                font: { size: 12 },
+                callback: function(value) {
+                  return Number(value).toFixed(0);
+                }
+              },
+              title: {
+                display: true,
+                text: 'Average Balls Contributed'
+              }
+            }
+          }
+        }
+      });
+
+      renderSummaryCards(selectedTeams);
+      setStatus(`Showing comparison for ${selectedTeams.map(t => `Team ${t}`).join(', ')}.`);
+    }
+
+    function renderEmptyChart() {
+      const ctx = document.getElementById('comparisonChart').getContext('2d');
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: ['Auto Balls', 'Teleop Balls', 'Total Balls'],
+          datasets: [{
+            label: 'No Team Selected',
+            data: [0, 0, 0],
+            backgroundColor: 'rgba(209, 213, 219, 0.8)'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false },
+            tooltip: { enabled: false },
+            datalabels: { display: false }
+          },
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true, beginAtZero: true }
+          }
+        }
+      });
+    }
+
+    function renderSummaryCards(selectedTeams) {
+      summaryGrid.innerHTML = '';
+      selectedTeams.forEach((team, index) => {
+        const stats = teamAverages[team];
+        const card = document.createElement('div');
+        card.className = 'summary-card';
+        card.innerHTML = `
+          <h3 style="color:${teamColors[index % teamColors.length]}">Team ${team}</h3>
+          <div><strong>Matches:</strong> ${stats.matches}</div>
+          <div><strong>Avg Auto Balls:</strong> ${stats.autoAvg.toFixed(2)}</div>
+          <div><strong>Avg Teleop Balls:</strong> ${stats.teleopAvg.toFixed(2)}</div>
+          <div><strong>Avg Total Balls:</strong> ${stats.totalAvg.toFixed(2)}</div>
+        `;
+        summaryGrid.appendChild(card);
+      });
+    }
+
+    function toNumber(value) {
+      const n = Number(String(value || '').trim());
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    renderEmptyChart();
+    setStatus('Loading default sheet...');
+    window.addEventListener('load', loadSheetData);
+  </script>
 </body>
 </html>
