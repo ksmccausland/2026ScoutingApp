@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Ball Scouting App</title>
+  <style>
+    :root {
+      --bg: #f4f7fb;
+      --card: #ffffff;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --primary: #2563eb;
+      --primary-dark: #1d4ed8;
+      --danger: #dc2626;
+      --danger-dark: #b91c1c;
+      --border: #d1d5db;
+      --success: #166534;
+      --success-bg: #dcfce7;
+      --error: #991b1b;
+      --error-bg: #fee2e2;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 520px;
+      background: var(--card);
+      border-radius: 18px;
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+      padding: 28px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 1.9rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      margin: 0 0 24px;
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.4;
+    }
+
+    .field-group {
+      margin-bottom: 18px;
+    }
+
+    label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    input[type="number"],
+    input[type="url"] {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      font-size: 1rem;
+    }
+
+    .counter-card {
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      margin-bottom: 18px;
+      background: #fafcff;
+    }
+
+    .counter-title {
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .counter-controls {
+      display: grid;
+      grid-template-columns: 72px 1fr 72px;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .counter-value {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      padding: 12px;
+      border-radius: 12px;
+      background: #eef2ff;
+      border: 1px solid #c7d2fe;
+      user-select: none;
+    }
+
+    button {
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-size: 1.1rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.08s ease, background 0.15s ease;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .minus-btn {
+      background: var(--danger);
+      color: white;
+    }
+
+    .minus-btn:hover {
+      background: var(--danger-dark);
+    }
+
+    .plus-btn {
+      background: var(--primary);
+      color: white;
+    }
+
+    .plus-btn:hover {
+      background: var(--primary-dark);
+    }
+
+    .submit-btn {
+      width: 100%;
+      margin-top: 10px;
+      background: #059669;
+      color: white;
+      padding: 14px;
+      font-size: 1rem;
+    }
+
+    .submit-btn:hover {
+      background: #047857;
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.7;
+      cursor: not-allowed;
+    }
+
+    .secondary-btn {
+      width: 100%;
+      margin-top: 10px;
+      background: #e5e7eb;
+      color: #111827;
+    }
+
+    .status {
+      margin-top: 16px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      display: none;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+
+    .status.success {
+      display: block;
+      background: var(--success-bg);
+      color: var(--success);
+    }
+
+    .status.error {
+      display: block;
+      background: var(--error-bg);
+      color: var(--error);
+    }
+
+    .help {
+      margin-top: 18px;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.45;
+    }
+
+    code {
+      background: #f3f4f6;
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 520px) {
+      .app {
+        padding: 20px;
+      }
+
+      .counter-controls {
+        grid-template-columns: 64px 1fr 64px;
+        gap: 10px;
+      }
+
+      .counter-value {
+        font-size: 1.75rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <h1>Ball Scouting App</h1>
+    <p class="subtitle">Track match data in the browser and submit it to Google Sheets.</p>
+
+    <form id="scoutingForm">
+      <div class="field-group">
+        <label for="sheetUrl">Google Apps Script Web App URL</label>
+        <input
+          type="url"
+          id="sheetUrl"
+          placeholder="Paste your deployed Apps Script web app URL here"
+          required
+        />
+      </div>
+
+      <div class="field-group">
+        <label for="matchNumber">Match #</label>
+        <input type="number" id="matchNumber" min="1" step="1" required />
+      </div>
+
+      <div class="field-group">
+        <label for="teamNumber">Team #</label>
+        <input type="number" id="teamNumber" min="1" step="1" required />
+      </div>
+
+      <div class="counter-card">
+        <div class="counter-title">Balls Scored Auto</div>
+        <div class="counter-controls">
+          <button type="button" class="minus-btn" data-target="autoCount" data-change="-1">−</button>
+          <div class="counter-value" id="autoCountDisplay">0</div>
+          <button type="button" class="plus-btn" data-target="autoCount" data-change="1">+</button>
+        </div>
+      </div>
+
+      <div class="counter-card">
+        <div class="counter-title">Balls Scored Teleop</div>
+        <div class="counter-controls">
+          <button type="button" class="minus-btn" data-target="teleopCount" data-change="-1">−</button>
+          <div class="counter-value" id="teleopCountDisplay">0</div>
+          <button type="button" class="plus-btn" data-target="teleopCount" data-change="1">+</button>
+        </div>
+      </div>
+
+      <input type="hidden" id="autoCount" value="0" />
+      <input type="hidden" id="teleopCount" value="0" />
+
+      <button type="submit" class="submit-btn" id="submitBtn">Submit</button>
+      <button type="button" class="secondary-btn" id="resetBtn">Reset Counters</button>
+    </form>
+
+    <div id="status" class="status"></div>
+
+    <div class="help">
+      In Google Sheets, make a tab with headers like
+      <code>Timestamp</code>, <code>Match #</code>, <code>Team #</code>,
+      <code>Balls Scored Auto</code>, and <code>Balls Scored Teleop</code>.
+      Then connect this app to the Apps Script backend shown below.
+    </div>
+  </div>
+
+  <script>
+    const form = document.getElementById('scoutingForm');
+    const statusEl = document.getElementById('status');
+    const submitBtn = document.getElementById('submitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    document.querySelectorAll('[data-target]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const targetId = button.dataset.target;
+        const change = parseInt(button.dataset.change, 10);
+        const hiddenInput = document.getElementById(targetId);
+        const display = document.getElementById(targetId + 'Display');
+
+        let currentValue = parseInt(hiddenInput.value, 10) || 0;
+        currentValue += change;
+        if (currentValue < 0) currentValue = 0;
+
+        hiddenInput.value = currentValue;
+        display.textContent = currentValue;
+      });
+    });
+
+    resetBtn.addEventListener('click', () => {
+      setCounter('autoCount', 0);
+      setCounter('teleopCount', 0);
+      showStatus('Counters reset.', 'success');
+    });
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearStatus();
+
+      const scriptUrl = document.getElementById('sheetUrl').value.trim();
+      const matchNumber = document.getElementById('matchNumber').value.trim();
+      const teamNumber = document.getElementById('teamNumber').value.trim();
+      const autoCount = document.getElementById('autoCount').value;
+      const teleopCount = document.getElementById('teleopCount').value;
+
+      if (!scriptUrl || !matchNumber || !teamNumber) {
+        showStatus('Please fill in the Apps Script URL, Match #, and Team #.', 'error');
+        return;
+      }
+
+      const payload = {
+        timestamp: new Date().toISOString(),
+        matchNumber: Number(matchNumber),
+        teamNumber: Number(teamNumber),
+        ballsScoredAuto: Number(autoCount),
+        ballsScoredTeleop: Number(teleopCount)
+      };
+
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Submitting...';
+
+      try {
+        const response = await fetch(scriptUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'text/plain;charset=utf-8'
+          },
+          body: JSON.stringify(payload)
+        });
+
+        const text = await response.text();
+        let result = {};
+
+        try {
+          result = JSON.parse(text);
+        } catch {
+          result = { success: response.ok, message: text || 'Unknown response from server.' };
+        }
+
+        if (!response.ok || result.success === false) {
+          throw new Error(result.message || 'Submission failed.');
+        }
+
+        showStatus('Submitted successfully to Google Sheets.', 'success');
+        alert('Submission successful. Your form will now reset.');
+        const savedUrl = document.getElementById('sheetUrl').value;
+        form.reset();
+        document.getElementById('sheetUrl').value = savedUrl;
+        setCounter('autoCount', 0);
+        setCounter('teleopCount', 0);
+        document.getElementById('matchNumber').focus();
+      } catch (error) {
+        showStatus('Error submitting data: ' + error.message, 'error');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Submit';
+      }
+    });
+
+    function setCounter(id, value) {
+      document.getElementById(id).value = value;
+      document.getElementById(id + 'Display').textContent = value;
+    }
+
+    function showStatus(message, type) {
+      statusEl.textContent = message;
+      statusEl.className = 'status ' + type;
+    }
+
+    function clearStatus() {
+      statusEl.textContent = '';
+      statusEl.className = 'status';
+    }
+  </script>
+
+  <!--
+    Google Apps Script backend example
+
+    1) Open the Google Sheet you want to store data in.
+    2) Extensions -> Apps Script
+    3) Paste this code into Code.gs
+    4) Replace SHEET_NAME with your sheet tab name.
+    5) Deploy -> New deployment -> Web app
+       Execute as: Me
+       Who has access: Anyone with the link
+    6) Copy the web app URL and paste it into the app.
+
+    function doPost(e) {
+      try {
+        const SHEET_NAME = 'Sheet1';
+        const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName(SHEET_NAME);
+
+        if (!sheet) {
+          return jsonResponse({ success: false, message: 'Sheet tab not found.' });
+        }
+
+        const data = JSON.parse(e.postData.contents);
+
+        sheet.appendRow([
+          data.timestamp || '',
+          data.matchNumber || '',
+          data.teamNumber || '',
+          data.ballsScoredAuto || 0,
+          data.ballsScoredTeleop || 0
+        ]);
+
+        return jsonResponse({ success: true, message: 'Row added.' });
+      } catch (err) {
+        return jsonResponse({ success: false, message: String(err) });
+      }
+    }
+
+    function jsonResponse(obj) {
+      return ContentService
+        .createTextOutput(JSON.stringify(obj))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+  -->
+</body>
+</html>
